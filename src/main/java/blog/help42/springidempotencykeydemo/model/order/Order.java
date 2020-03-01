@@ -23,7 +23,7 @@ import java.util.List;
 @NoArgsConstructor
 public class Order extends IdempotencyKeyEnabled {
     public static final String TABLE_NAME = "orders";
-    public static final String IDEMPOTENCY_KEY_CONSTRAINT = TABLE_NAME + "_" + IdempotencyKeyEnabled.IDEMPOTENCY_KEY_CONSTRAINT;
+    public static final String IDEMPOTENCY_KEY_CONSTRAINT = TABLE_NAME + "_" + IdempotencyKeyEnabled.IDEMPOTENCY_KEY_NAME + "_constraint";
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
@@ -45,6 +45,7 @@ public class Order extends IdempotencyKeyEnabled {
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "billTo", nullable = false)
+    @NotNull
     private Account billTo;
 
     @Min(value = 0)
@@ -58,4 +59,9 @@ public class Order extends IdempotencyKeyEnabled {
     @Min(value = 0)
     @NotNull
     private BigDecimal total;
+
+    @Override
+    public String getIdempotencyKeyConstraintName() {
+        return IDEMPOTENCY_KEY_CONSTRAINT;
+    }
 }

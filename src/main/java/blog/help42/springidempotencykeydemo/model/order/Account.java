@@ -7,7 +7,6 @@ import lombok.Setter;
 import org.hibernate.validator.constraints.Length;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotBlank;
 
 @Entity
 @Table(name = Account.TABLE_NAME,
@@ -20,12 +19,17 @@ import javax.validation.constraints.NotBlank;
 @NoArgsConstructor
 public class Account extends IdempotencyKeyEnabled {
     public static final String TABLE_NAME = "accounts";
-    public static final String IDEMPOTENCY_KEY_CONSTRAINT = TABLE_NAME + "_" + IdempotencyKeyEnabled.IDEMPOTENCY_KEY_CONSTRAINT;
+    public static final String IDEMPOTENCY_KEY_CONSTRAINT = TABLE_NAME + "_" + IdempotencyKeyEnabled.IDEMPOTENCY_KEY_NAME + "_constraint";
+
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
 
-    @NotBlank
     @Length(max = 255)
     private String name;
+
+    @Override
+    public String getIdempotencyKeyConstraintName() {
+        return IDEMPOTENCY_KEY_CONSTRAINT;
+    }
 }

@@ -1,29 +1,32 @@
 package blog.help42.springidempotencykeydemo.controller;
 
-import blog.help42.springidempotencykeydemo.exception.ErrorInfo;
+
 import blog.help42.springidempotencykeydemo.exception.IdempotencyKeyException;
 import blog.help42.springidempotencykeydemo.model.payment.PaymentTransaction;
 import blog.help42.springidempotencykeydemo.repository.PaymentTransactionRepository;
+import blog.help42.springidempotencykeydemo.utils.RestUtils;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.validation.Valid;
-import java.net.URI;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @RestController
-@RequestMapping(path = "/api/v1/txs")
+@RequestMapping(path = PaymentTransactionController.RESOURCE_PATH)
 public class PaymentTransactionController {
+    public static final String RESOURCE_PATH = "/api/v1/txs";
+
     @Autowired
     private PaymentTransactionRepository paymentTransactionRepository;
+
+    @Autowired
+    private RestUtils restUtils;
 
     @GetMapping(produces = "application/json")
     public Page<PaymentTransaction> getPaymentTransactions(Pageable pageable) {
@@ -35,17 +38,21 @@ public class PaymentTransactionController {
         try {
             transaction = paymentTransactionRepository.save(transaction);
         } catch (DataIntegrityViolationException e) {
-            throw handleDataIntegrityViolationException(e, transaction.getIdempotencyKey());
+            if (!transaction.isIdempotencyKeyConstraint(e)) {
+                throw e;
+            }
+
+            final var id = paymentTransactionRepository.findByIdempotencyKey(transaction.getIdempotencyKey())
+                    .map(t -> t.getId())
+                    .orElseThrow(IllegalStateException::new);
+
+            throw new IdempotencyKeyException(OrderController.RESOURCE_PATH, id, e);
         }
 
-        //Create resource location
-        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
-                .path("/{id}")
-                .buildAndExpand(transaction.getId())
-                .toUri();
-
         //Send location in response
-        return ResponseEntity.created(location).body(transaction);
+        return ResponseEntity
+                .created(restUtils.getResourceLocation(PaymentTransactionController.RESOURCE_PATH, transaction.getId()))
+                .body(transaction);
     }
 
     @PutMapping(path = "/{txId}", consumes = "application/json", produces = "application/json")
@@ -58,26 +65,16 @@ public class PaymentTransactionController {
                 }).orElseThrow(() -> new NoSuchElementException("Order not found with id = " + txId));
     }
 
-    @ExceptionHandler(IdempotencyKeyException.class)
-    public ResponseEntity<ErrorInfo> handleIdempotencyKeyException(DataIntegrityViolationException e) {
-        return new ResponseEntity(new ErrorInfo("Idempotency key violation"), HttpStatus.CONFLICT);
-    }
-
-    @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<ErrorInfo> handleDataIntegrityViolationException(DataIntegrityViolationException e) {
-        return new ResponseEntity(new ErrorInfo("Data integrity error"), HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
     private RuntimeException handleDataIntegrityViolationException(DataIntegrityViolationException e, UUID idempotenceKey) {
         var cause = e.getCause();
         if (cause instanceof ConstraintViolationException &&
                 PaymentTransaction.IDEMPOTENCY_KEY_CONSTRAINT
                         .equals(((ConstraintViolationException) cause).getConstraintName())) {
-            Long txId = paymentTransactionRepository.findByIdempotencyKey(idempotenceKey)
+            Long id = paymentTransactionRepository.findByIdempotencyKey(idempotenceKey)
                     .map(t -> t.getId())
                     .orElseThrow(IllegalStateException::new);
 
-            return new IdempotencyKeyException(e);
+            return new IdempotencyKeyException(PaymentTransactionController.RESOURCE_PATH, id, e);
         }
 
         return e;

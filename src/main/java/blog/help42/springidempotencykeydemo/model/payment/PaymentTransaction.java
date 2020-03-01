@@ -1,12 +1,14 @@
 package blog.help42.springidempotencykeydemo.model.payment;
 
 import blog.help42.springidempotencykeydemo.model.IdempotencyKeyEnabled;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
@@ -14,7 +16,7 @@ import java.util.Currency;
 import java.util.UUID;
 
 @Entity
-@Table(name = "payment_transactions",
+@Table(name = PaymentTransaction.TABLE_NAME,
         uniqueConstraints = {
                 @UniqueConstraint(name = PaymentTransaction.IDEMPOTENCY_KEY_CONSTRAINT,
                         columnNames = {IdempotencyKeyEnabled.IDEMPOTENCY_KEY_NAME})
@@ -23,12 +25,8 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 public class PaymentTransaction extends IdempotencyKeyEnabled {
-    public static final String IDEMPOTENCY_KEY_CONSTRAINT = "payment_transactions_" + IdempotencyKeyEnabled.IDEMPOTENCY_KEY_CONSTRAINT;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    @Setter(AccessLevel.PROTECTED)
-    private Long id;
+    public static final String TABLE_NAME = "payment_transactions";
+    public static final String IDEMPOTENCY_KEY_CONSTRAINT = TABLE_NAME + "_" + IdempotencyKeyEnabled.IDEMPOTENCY_KEY_NAME + "_constraint";
 
     @NotNull
     @Column(length = 3)
@@ -43,5 +41,10 @@ public class PaymentTransaction extends IdempotencyKeyEnabled {
         super(idempotencyKey);
         this.currency = currency;
         this.amount = amount;
+    }
+
+    @Override
+    public String getIdempotencyKeyConstraintName() {
+        return IDEMPOTENCY_KEY_CONSTRAINT;
     }
 }

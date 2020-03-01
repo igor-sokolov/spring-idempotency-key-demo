@@ -47,7 +47,7 @@ public class SpringIdempotencyKeyDemoIntegrationTest {
 		assertThat(errorEntity.getBody()).hasFieldOrPropertyWithValue("message", "Idempotency key violation");
 	}
 
-	//	@Test
+	@Test
 	public void retryPostOrder() {
 		OrderEntry entry0 = new OrderEntry();
 		entry0.setIndex(0);

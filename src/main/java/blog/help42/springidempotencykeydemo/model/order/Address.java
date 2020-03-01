@@ -22,7 +22,7 @@ import javax.validation.constraints.Pattern;
 @NoArgsConstructor
 public class Address extends IdempotencyKeyEnabled {
     public static final String TABLE_NAME = "addresses";
-    public static final String IDEMPOTENCY_KEY_CONSTRAINT = TABLE_NAME + "_" + IdempotencyKeyEnabled.IDEMPOTENCY_KEY_CONSTRAINT;
+    public static final String IDEMPOTENCY_KEY_CONSTRAINT = TABLE_NAME + "_" + IdempotencyKeyEnabled.IDEMPOTENCY_KEY_NAME + "_constraint";
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
@@ -50,4 +50,9 @@ public class Address extends IdempotencyKeyEnabled {
     @NotBlank
     @Length(min = 3, max = 10)
     private String zipcode;
+
+    @Override
+    public String getIdempotencyKeyConstraintName() {
+        return IDEMPOTENCY_KEY_CONSTRAINT;
+    }
 }

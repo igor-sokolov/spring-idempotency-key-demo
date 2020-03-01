@@ -3,11 +3,11 @@
 		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.1.8.RELEASE</version>
-		<relativePath/> <!-- lookup parent from repository -->
-	</parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.2.2.RELEASE</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
 
 	<groupId>blog.help42</groupId>
 	<artifactId>spring-idempotency-key-demo</artifactId>
@@ -17,10 +17,10 @@
 
 	<description>Demo project for Spring Boot</description>
 
-	<properties>
-		<java.version>12</java.version>
-		<tomcat.port>8080</tomcat.port>
-	</properties>
+    <properties>
+        <java.version>13</java.version>
+        <tomcat.port>8080</tomcat.port>
+    </properties>
 
 	<dependencies>
 		<dependency>

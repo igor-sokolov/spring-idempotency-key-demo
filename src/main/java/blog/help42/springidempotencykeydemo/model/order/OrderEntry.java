@@ -25,7 +25,7 @@ public class OrderEntry {
     private Long id;
 
     @Min(value = 0)
-    @NotBlank
+    @NotNull
     private int index;
 
     @NotBlank
